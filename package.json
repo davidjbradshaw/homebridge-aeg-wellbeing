@@ -1,15 +1,15 @@
 {
-  "displayName": "Homebridge Electrolux Wellbeing",
-  "name": "homebridge-electrolux-wellbeing",
-  "version": "0.1.0",
-  "description": "Connects to your Electrolux Purefier.",
+  "displayName": "Homebridge AEG Wellbeing",
+  "name": "homebridge-aeg-wellbeing",
+  "version": "1.0.0",
+  "description": "Connects to your AEG Purefier.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git://github.com/baboons/homebridge-electrolux-wellbeing.git"
+    "url": "git://github.com/davidjbradshaw/homebridge-aeg-wellbeing.git"
   },
   "bugs": {
-    "url": "https://github.com/baboons/homebridge-electrolux-wellbeing.git/issues"
+    "url": "https://github.com/davidjbradshaw/homebridge-aeg-wellbeing.git/issues"
   },
   "engines": {
     "node": ">=10.17.0",

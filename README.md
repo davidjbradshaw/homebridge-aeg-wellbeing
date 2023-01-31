@@ -1,10 +1,10 @@
-# Homebridge integration for Electrolux Wellbeing
+# Homebridge integration for AEG Wellbeing
 
-This is the Electrolux Wellbeing plugin for [Homebridge](https://github.com/nfarina/homebridge). This plugin will add support for Electrolux Air Purifier with all it's sensors (Air Quality, Temperature, Humidity, CO2 and Light) 
+This is the AEG Wellbeing plugin for [Homebridge](https://github.com/nfarina/homebridge). This plugin will add support for AEG Air Purifier with all it's sensors (Air Quality, Temperature, Humidity, CO2 and Light) 
 to your Home app. 
 
 ## Installation
-`npm install -g homebridge-electrolux-wellbeing` or use Homebridge UI
+`npm install -g homebridge-aeg-wellbeing` or use Homebridge UI
 
 ## Configuration
 Use Homebridge UI to configure and set your username and password.
