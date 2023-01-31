@@ -17,8 +17,8 @@ import { AxiosInstance } from 'axios';
 import { createClient } from './api';
 import { Appliance, WorkModes, WellbeingApi } from './types';
 
-const PLUGIN_NAME = 'electrolux-wellbeing';
-const PLATFORM_NAME = 'ElectroluxWellbeing';
+const PLUGIN_NAME = 'aeg-wellbeing';
+const PLATFORM_NAME = 'AEGWellbeing';
 
 // Pure A9 fans support speeds from [1, 9].
 const FAN_SPEED_MULTIPLIER = 100 / 9;
@@ -414,7 +414,7 @@ class ElectroluxWellbeingPlatform implements DynamicPlatformPlugin {
 
       accessory
         .getService(Service.AccessoryInformation)!
-        .setCharacteristic(Characteristic.Manufacturer, 'Electrolux')
+        .setCharacteristic(Characteristic.Manufacturer, 'AEG')
         .setCharacteristic(Characteristic.Model, modelName)
         .setCharacteristic(Characteristic.SerialNumber, pncId)
         .setCharacteristic(Characteristic.FirmwareRevision, firmwareVersion);

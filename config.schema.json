@@ -1,5 +1,5 @@
 {
-  "pluginAlias": "ElectroluxWellbeing",
+  "pluginAlias": "AEGWellbeing",
   "pluginType": "platform",
   "singular": true,
   "schema": {
