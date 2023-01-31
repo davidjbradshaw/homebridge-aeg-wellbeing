@@ -31,10 +31,10 @@ export = (api: API) => {
   Accessory = api.platformAccessory;
   Service = hap.Service;
   Characteristic = hap.Characteristic;
-  api.registerPlatform(PLATFORM_NAME, ElectroluxWellbeingPlatform);
+  api.registerPlatform(PLATFORM_NAME, AEGWellbeingPlatform);
 };
 
-class ElectroluxWellbeingPlatform implements DynamicPlatformPlugin {
+class AEGWellbeingPlatform implements DynamicPlatformPlugin {
   private client?: AxiosInstance;
   private readonly log: Logging;
   private readonly api: API;
