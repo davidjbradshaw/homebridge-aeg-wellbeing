@@ -217,15 +217,15 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
         .getService(Service.CarbonDioxideSensor)!
         .updateCharacteristic(Characteristic.CarbonDioxideLevel, state.co2);
 
-      if (state.envLightLevel) {
-        // Env Light Level needs to be tested with lux meter
-        accessory
-          .getService(Service.LightSensor)!
-          .updateCharacteristic(
-            Characteristic.CurrentAmbientLightLevel,
-            state.envLightLevel,
-          );
-      }
+      // if (state.envLightLevel) {
+      //   // Env Light Level needs to be tested with lux meter
+      //   accessory
+      //    .getService(Service.LightSensor)!
+      //     .updateCharacteristic(
+      //       Characteristic.CurrentAmbientLightLevel,
+      //       state.envLightLevel,
+      //     );
+      // }
 
       accessory
         .getService(Service.AirQualitySensor)!
@@ -410,7 +410,8 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
       accessory.addService(Service.TemperatureSensor);
       accessory.addService(Service.CarbonDioxideSensor);
       accessory.addService(Service.HumiditySensor);
-      accessory.addService(Service.LightSensor);
+
+      // accessory.addService(Service.LightSensor);
 
       accessory
         .getService(Service.AccessoryInformation)!
