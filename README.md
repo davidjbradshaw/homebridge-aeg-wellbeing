@@ -1,7 +1,6 @@
 # Homebridge integration for AEG Wellbeing
 
-This is the AEG Wellbeing plugin for [Homebridge](https://github.com/nfarina/homebridge). This plugin will add support for AEG Air Purifiers with all their sensors (Air Quality, Temperature, Humidity, CO2 and Light) 
-to your Home app. 
+This is the AEG Wellbeing plugin for [Homebridge](https://github.com/nfarina/homebridge). This plugin will add support for AEG Air Purifiers with all their sensors (Air Quality, Temperature, Humidity, CO2) to your Home app. 
 
 ## Installation
 `npm install -g homebridge-aeg-wellbeing` or use Homebridge UI
