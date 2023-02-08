@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { find } from 'lodash';
 import {
   API,
   APIEvent,
@@ -55,12 +55,8 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
       //this.removeAccessories();
 
       try {
-        this.client = await createClient({
-          username: this.config.username,
-          password: this.config.password,
-        });
+        this.client = await this.connect();
       } catch (err) {
-        this.log.debug('Error while creating client', err);
         return;
       }
 
@@ -86,6 +82,18 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
         this.getPollTime(this.config.pollTime),
       );
     });
+  }
+
+  async connect() {
+    try {
+      return await createClient({
+        username: this.config.username,
+        password: this.config.password,
+      });
+    } catch (err) {
+      this.log.debug('Error while creating client', err);
+      throw(err);
+    }
   }
 
   needsConfiguration(): boolean {
@@ -151,6 +159,12 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
       };
     } catch (err) {
       this.log.info('Could not fetch appliances data: ' + err);
+      try {
+        this.client = await this.connect();
+      } catch (err) {
+        this.log.warn('Recoonection failure');
+        return;
+      }
     }
   }
 
@@ -274,7 +288,7 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
   }
 
   getApplianceState(pncId: string, data): Appliance {
-    return _.find(data, { pncId });
+    return find(data, { pncId });
   }
 
   configureAccessory(accessory: PlatformAccessory): void {
@@ -445,7 +459,7 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
   }
 
   isAccessoryRegistered(name: string, uuid: string) {
-    return !!_.find(this.accessories, { UUID: uuid });
+    return !!find(this.accessories, { UUID: uuid });
   }
 
   getAirQualityLevel(pm25: number): number {
