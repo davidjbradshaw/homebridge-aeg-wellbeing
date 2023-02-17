@@ -204,9 +204,12 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
       const state = this.getApplianceState(pncId, data);
 
       // Guard against missing data due to API request failure.
-      if (!state) {
+      if (!state || !state.name) {
+        this.log.warn(`No appliance data returned by API for ${pncId}`);
         return;
       }
+
+      // this.log.debug(JSON.stringify(state));
 
       // Keep firmware revision up-to-date in case the device is updated.
       accessory
