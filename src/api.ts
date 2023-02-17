@@ -37,7 +37,7 @@ export const createClient = async ({ username, password }) => {
         return Promise.resolve();
       }),
     {
-      statusCodes: [400, 401, 500, 503],
+      statusCodes: [400, 401, 403, 408, 429, 500, 502, 503, 504],
     },
   );
 
