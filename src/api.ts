@@ -1,8 +1,8 @@
 import axios from 'axios';
 import createAuthRefreshInterceptor from 'axios-auth-refresh';
 
-const baseUrl = 'https://api.delta.electrolux.com/api';
-const clientUrl =
+const BASE_URL = 'https://api.delta.electrolux.com/api';
+const CLIENT_URL =
   'https://electrolux-wellbeing-client.vercel.app/api/mu52m5PR9X';
 
 const contentType = {
@@ -10,7 +10,7 @@ const contentType = {
 }
 
 const fetchClientToken = async () => {
-  const response = await axios.get(clientUrl, {
+  const response = await axios.get(CLIENT_URL, {
     headers: contentType,
   });
 
@@ -19,7 +19,7 @@ const fetchClientToken = async () => {
 
 const doLogin = async ({ username, password, clientToken }) =>
   axios.post(
-    `${baseUrl}/Users/Login`,
+    `${BASE_URL}/Users/Login`,
     {
       Username: username,
       password,
@@ -42,7 +42,7 @@ export default async ({ username, password }) => {
   const { accessToken } = response.data;
 
   const client = axios.create({
-    baseURL: baseUrl,
+    baseURL: BASE_URL,
     headers: {
       ...contentType,
       Authorization: `Bearer ${accessToken}`,
