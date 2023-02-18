@@ -20,8 +20,8 @@ import { Appliance, WellbeingApi,WorkModes } from './types';
 const PLUGIN_NAME = 'aeg-wellbeing';
 const PLATFORM_NAME = 'AEGWellbeing';
 
-// Pure A9 fans support speeds from [1, 9].
-const FAN_SPEED_MULTIPLIER = 100 / 9;
+// AX9 fans support speeds from [1, 9].
+const FAN_SPEED_MULTIPLIER = 100 / 9;   // eslint-disable-line const-case/uppercase
 
 let hap: HAP; let Service; let Characteristic;
 let Accessory: typeof PlatformAccessory;
@@ -61,7 +61,8 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
         appliances.map((appliance) => this.fetchApplianceData(appliance.pncId)),
       );
 
-      this.log.debug('Fetched: ', applianceData);
+      this.log.info('Fetched appliances: ', appliances);
+      this.log.info('Fetched data: ', applianceData);
 
       appliances.forEach(({ applianceName, modelName, pncId }, i) => {
         this.addAccessory({
