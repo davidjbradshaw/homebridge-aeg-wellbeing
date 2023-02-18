@@ -3,6 +3,7 @@
   "rules": {
     "pii/no-phone-number": 0,
     "class-methods-use-this": 0,
+    "import/no-extraneous-dependencies": 0,
     "scanjs-rules/call_connect": 0,
     "unicorn/switch-case-braces": ["error", "avoid"],
 
