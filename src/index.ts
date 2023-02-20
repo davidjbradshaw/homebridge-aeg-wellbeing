@@ -254,17 +254,13 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
         .getService(Service.CarbonDioxideSensor)!
         .updateCharacteristic(Characteristic.CarbonDioxideLevel, state.co2);
 
-      // if('doorOpen' in features && !accessory.getService(Service.DoorSensor)) 
-      //   accessory.addService(Service.DoorSensor, 'Filter Door')
+      if('doorOpen' in features && !accessory.getService(Service.ContactSensor)) 
+        accessory.addService(Service.ContactSensor, 'Filter Contact')
 
       // if('doorOpen' in features) accessory
       //   .getService(Service.DoorSensor)!
       //   .updateCharacteristic(Characteristic.PositionState,
       //     Characteristic.PositionState.STOPPED)
-      //   .updateCharacteristic(Characteristic.CurrentPosition,
-      //     state.doorOpen ? DOOR_OPEN : DOOR_CLOSED)
-      //   .updateCharacteristic(Characteristic.TargetPosition,
-      //     state.doorOpen ? DOOR_OPEN : DOOR_CLOSED)
 
       if ('envLightLevel' in features) {
         // Env Light Level needs to be tested with lux meter
@@ -280,28 +276,21 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
           );
       }
 
-      accessory
+      const airQualitySensor = accessory
         .getService(Service.AirQualitySensor)!
         .updateCharacteristic(
           Characteristic.AirQuality,
           this.getAirQualityLevel(state.pm25),
         )
         .updateCharacteristic(Characteristic.PM2_5Density, state.pm25)
-        .updateCharacteristic(Characteristic.PM10Density, state.pm10)
-        .updateCharacteristic(
+        .updateCharacteristic(Characteristic.PM10Density, state.pm10);
+
+      if('tvoc' in features) airQualitySensor.updateCharacteristic(
           Characteristic.VOCDensity,
           this.convertTVOCToDensity(state.tvoc),
         );
 
-      accessory
-        .getService(Service.AirPurifier)!
-        .updateCharacteristic(Characteristic.FilterLifeLevel, state.filterLife)
-        .updateCharacteristic(
-          Characteristic.FilterChangeIndication,
-          state.filterLife < 5
-            ? Characteristic.FilterChangeIndication.CHANGE_FILTER
-            : Characteristic.FilterChangeIndication.FILTER_OK,
-        )
+      const airPurifierSevice = accessory.getService(Service.AirPurifier)!
         .updateCharacteristic(
           Characteristic.Active,
           state.workMode !== WorkModes.Off,
@@ -322,7 +311,18 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
           Characteristic.LockPhysicalControls,
           state.safetyLock,
         )
-        .updateCharacteristic(Characteristic.SwingMode, state.ionizer);
+
+        if('filterLife' in features) airPurifierSevice
+          .updateCharacteristic(Characteristic.FilterLifeLevel, state.filterLife)
+          .updateCharacteristic(
+            Characteristic.FilterChangeIndication,
+            state.filterLife < 5
+              ? Characteristic.FilterChangeIndication.CHANGE_FILTER
+              : Characteristic.FilterChangeIndication.FILTER_OK,
+          )
+
+        if('ionizer' in features) airPurifierSevice
+          .updateCharacteristic(Characteristic.SwingMode, state.ionizer);
     });
   }
 
@@ -474,9 +474,7 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
     if('co2' in hasFeature) accessory.addService(Service.CarbonDioxideSensor);
     if('humidity' in hasFeature) accessory.addService(Service.HumiditySensor);
     if('envLightLevel' in hasFeature) accessory.addService(Service.LightSensor);
-    // if('doorOpen' in hasFeature) accessory
-    //   .addService(Service.Door, 'Filter Door')
-    //   .updateCharacteristic(Characteristic.PositionState, Characteristic.PositionState.STOPPED);
+    if('doorOpen' in hasFeature) accessory.addService(Service.ContactSensor, 'Filter Door')
 
     this.log.info('Services:', Object.keys(accessory.services))
 
