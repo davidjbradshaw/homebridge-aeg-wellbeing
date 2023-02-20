@@ -1,44 +1,40 @@
-import { find } from 'lodash';
+import { AxiosInstance } from 'axios';
 import {
   API,
   APIEvent,
+  CharacteristicEventTypes,
+  CharacteristicSetCallback,
+  CharacteristicValue,
   DynamicPlatformPlugin,
   HAP,
   Logging,
-  CharacteristicSetCallback,
-  CharacteristicEventTypes,
-  CharacteristicValue,
   PlatformAccessory,
   PlatformAccessoryEvent,
   PlatformConfig,
 } from 'homebridge';
-import { AxiosInstance } from 'axios';
+import find from 'lodash/find';
 
-import { createClient } from './api';
-import { Appliance, WorkModes, WellbeingApi } from './types';
+import createClient from './api';
+import { Appliance, WellbeingApi,WorkModes } from './types';
 
 const PLUGIN_NAME = 'aeg-wellbeing';
 const PLATFORM_NAME = 'AEGWellbeing';
 
-// Pure A9 fans support speeds from [1, 9].
-const FAN_SPEED_MULTIPLIER = 100 / 9;
+// AX9 fans support speeds from [1, 9].
+const FAN_SPEED_MULTIPLIER = 100 / 9;   // eslint-disable-line const-case/uppercase
 
-let hap: HAP, Service, Characteristic;
+let hap: HAP; let Service; let Characteristic;
 let Accessory: typeof PlatformAccessory;
-
-export = (api: API) => {
-  hap = api.hap;
-  Accessory = api.platformAccessory;
-  Service = hap.Service;
-  Characteristic = hap.Characteristic;
-  api.registerPlatform(PLATFORM_NAME, AEGWellbeingPlatform);
-};
 
 class AEGWellbeingPlatform implements DynamicPlatformPlugin {
   private client?: AxiosInstance;
+
   private readonly log: Logging;
+
   private readonly api: API;
+
   private readonly config: PlatformConfig;
+
   private readonly accessories: PlatformAccessory[] = [];
 
   constructor(log: Logging, config: PlatformConfig, api: API) {
@@ -52,11 +48,11 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
         return;
       }
 
-      //this.removeAccessories();
+      // this.removeAccessories();
 
       try {
         this.client = await this.connect();
-      } catch (err) {
+      } catch (error) {
         return;
       }
 
@@ -65,9 +61,10 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
         appliances.map((appliance) => this.fetchApplianceData(appliance.pncId)),
       );
 
-      this.log.debug('Fetched: ', applianceData);
+      this.log.info('Fetched appliances: ', appliances);
+      this.log.info('Fetched data: ', applianceData);
 
-      appliances.map(({ applianceName, modelName, pncId }, i) => {
+      appliances.forEach(({ applianceName, modelName, pncId }, i) => {
         this.addAccessory({
           pncId,
           name: applianceName,
@@ -90,9 +87,9 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
         username: this.config.username,
         password: this.config.password,
       });
-    } catch (err) {
-      this.log.debug('Error while creating client', err);
-      throw(err);
+    } catch (error) {
+      this.log.debug('Error while creating client', error);
+      throw(error);
     }
   }
 
@@ -118,7 +115,7 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
   }
 
   async fetchAppliancesData() {
-    return await Promise.all(
+    return Promise.all(
       this.accessories.map((accessory) =>
         this.fetchApplianceData(accessory.context.pncId),
       ),
@@ -129,7 +126,7 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
     try {
       const response: { data: WellbeingApi.ApplianceData } =
         await this.client!.get(`/Appliances/${pncId}`);
-      const reported = response.data.twin.properties.reported;
+      const {reported} = response.data.twin.properties;
 
       return {
         pncId,
@@ -146,7 +143,7 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
         sleep: reported.Sleep,
         scheduler: reported.Scheduler,
         filterType: reported.FilterType,
-        version: reported['$version'],
+        version: reported.$version,
         pm1: reported.PM1,
         pm25: reported.PM2_5,
         pm10: reported.PM10,
@@ -157,15 +154,16 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
         envLightLevel: reported.EnvLightLvl,
         rssi: reported.RSSI,
       };
-    } catch (err) {
-      this.log.info('Could not fetch appliances data: ' + err);
+    } catch (error) {
+      this.log.warn(`Could not fetch appliances data: ${  error}`);
       try {
         this.client = await this.connect();
-      } catch (err) {
-        this.log.warn('Recoonection failure');
-        return;
+      } catch (error) {
+        this.log.error('Recoonection failure');
       }
     }
+
+    return undefined;
   }
 
   async getAllAppliances() {
@@ -173,8 +171,8 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
       const response: { data: WellbeingApi.Appliance[] } =
         await this.client!.get('/Domains/Appliances');
       return response.data;
-    } catch (err) {
-      this.log.info('Could not fetch appliances: ' + err);
+    } catch (error) {
+      this.log.info(`Could not fetch appliances: ${  error}`);
       return [];
     }
   }
@@ -193,13 +191,13 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
         [command]: value,
       });
       this.log.debug('command responded', response.data);
-    } catch (err) {
-      this.log.info('Could run command', err);
+    } catch (error) {
+      this.log.info('Could run command', error);
     }
   }
 
   updateValues(data) {
-    this.accessories.map((accessory) => {
+    this.accessories.forEach((accessory) => {
       const { pncId } = accessory.context;
       const state = this.getApplianceState(pncId, data);
 
@@ -318,7 +316,7 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
           ) {
             this.sendCommand(pncId, 'WorkMode', workMode);
             this.log.info(
-              '%s AirPurifier Active was set to: ' + workMode,
+              `%s AirPurifier Active was set to: ${  workMode}`,
               accessory.displayName,
             );
           }
@@ -339,7 +337,7 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
               : WorkModes.Auto;
           this.sendCommand(pncId, 'WorkMode', workMode);
           this.log.info(
-            '%s AirPurifier Work Mode was set to: ' + workMode,
+            `%s AirPurifier Work Mode was set to: ${  workMode}`,
             accessory.displayName,
           );
           callback();
@@ -353,12 +351,12 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
         CharacteristicEventTypes.SET,
         (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
           const fanSpeed = Math.floor(
-            parseInt(value.toString()) / FAN_SPEED_MULTIPLIER,
+            parseInt(value.toString(), 10) / FAN_SPEED_MULTIPLIER,
           );
           this.sendCommand(pncId, 'FanSpeed', fanSpeed);
 
           this.log.info(
-            '%s AirPurifier Fan Speed set to: ' + fanSpeed,
+            `%s AirPurifier Fan Speed set to: ${  fanSpeed}`,
             accessory.displayName,
           );
           callback();
@@ -380,7 +378,7 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
             this.sendCommand(pncId, 'SafetyLock', value);
 
             this.log.info(
-              '%s AirPurifier Saftey Lock set to: ' + value,
+              `%s AirPurifier Saftey Lock set to: ${  value}`,
               accessory.displayName,
             );
           }
@@ -402,7 +400,7 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
             this.sendCommand(pncId, 'Ionizer', value);
 
             this.log.info(
-              '%s AirPurifier Ionizer set to: ' + value,
+              `%s AirPurifier Ionizer set to: ${  value}`,
               accessory.displayName,
             );
           }
@@ -416,7 +414,12 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
   addAccessory({ name, modelName, pncId, firmwareVersion }) {
     const uuid = hap.uuid.generate(pncId);
 
-    if (!this.isAccessoryRegistered(name, uuid)) {
+    if (this.isAccessoryRegistered(name, uuid)) {
+      this.log.info(
+        'Accessory name %s already added, loading from cache ',
+        name,
+      );
+    } else {
       this.log.info('Adding new accessory with name %s', name);
       const accessory = new Accessory(name, uuid);
 
@@ -442,11 +445,6 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
       this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
         accessory,
       ]);
-    } else {
-      this.log.info(
-        'Accessory name %s already added, loading from cache ',
-        name,
-      );
     }
   }
 
@@ -467,15 +465,19 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
 
   getAirQualityLevel(pm25: number): number {
     switch (true) {
-      case pm25 < 6:
+      case pm25 < 6: 
         return Characteristic.AirQuality.EXCELLENT;
+
       case pm25 < 12:
         return Characteristic.AirQuality.GOOD;
+
       case pm25 < 36:
         return Characteristic.AirQuality.FAIR;
+      
       case pm25 < 50:
         return Characteristic.AirQuality.INFERIOR;
-      case pm25 >= 50:
+      
+      default:
         return Characteristic.AirQuality.POOR;
     }
 
@@ -516,10 +518,23 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
   //
   //  4000 * 3.243 / 10 = 1297.2
   //
+  /* eslint-disable no-secrets/no-secrets */
+  //
   // [1] https://uk-air.defra.gov.uk/assets/documents/reports/cat06/0502160851_Conversion_Factors_Between_ppb_and.pdf
   // [2] https://myhealthyhome.info/assets/pdfs/TB531rev2TVOCInterpretation.pdf
+  //
+  /* eslint-enable no-secrets/no-secrets */
+  //
   convertTVOCToDensity(tvocppb: number): number {
     const ugm3 = (tvocppb * 3.243) / 10;
     return Math.min(ugm3, 1000);
   }
 }
+
+export = (api: API) => {
+  hap = api.hap;
+  Accessory = api.platformAccessory;
+  Service = hap.Service;
+  Characteristic = hap.Characteristic;
+  api.registerPlatform(PLATFORM_NAME, AEGWellbeingPlatform);
+};
