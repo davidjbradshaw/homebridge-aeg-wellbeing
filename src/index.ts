@@ -19,12 +19,25 @@ import { Appliance, WellbeingApi,WorkModes } from './types';
 
 const PLUGIN_NAME = 'aeg-wellbeing';
 const PLATFORM_NAME = 'AEGWellbeing';
+const DOOR_OPEN = 100;
+const DOOR_CLOSED = 0;
 
 // AX9 fans support speeds from [1, 9].
-const FAN_SPEED_MULTIPLIER = 100 / 9;   // eslint-disable-line const-case/uppercase
+const FAN_SPEED_MULTIPLIER = 100 / 9;   
 
 let hap: HAP; let Service; let Characteristic;
 let Accessory: typeof PlatformAccessory;
+
+const getSupportedFeatues = (obj) =>
+    Object.entries(obj)
+      .filter(([/* key */, value]) => value !== undefined)
+      .map(([key]) => key)
+
+const arrayToObject = arr => {
+  const obj = {};
+  arr.forEach(element => obj[element] = true); // eslint-disable-line no-return-assign
+  return obj;
+};
 
 class AEGWellbeingPlatform implements DynamicPlatformPlugin {
   private client?: AxiosInstance;
@@ -70,6 +83,7 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
           name: applianceName,
           modelName,
           firmwareVersion: applianceData[i]?.firmwareVersion,
+          features: getSupportedFeatues(applianceData[i]),
         });
       });
 
@@ -128,6 +142,9 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
         await this.client!.get(`/Appliances/${pncId}`);
       const {reported} = response.data.twin.properties;
 
+      this.log.info('API response.data:', response.data)
+      this.log.info('API reported:', reported)
+
       return {
         pncId,
         name: response.data.applianceData.applianceName,
@@ -144,6 +161,7 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
         scheduler: reported.Scheduler,
         filterType: reported.FilterType,
         version: reported.$version,
+        doorOpen: reported.DoorOpen,
         pm1: reported.PM1,
         pm25: reported.PM2_5,
         pm10: reported.PM10,
@@ -207,7 +225,10 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
         return;
       }
 
-      // this.log.debug(JSON.stringify(state));
+      const features = arrayToObject(getSupportedFeatues(state))
+
+      this.log.debug('state:', state);
+      this.log.debug('featues:', features);
 
       // Keep firmware revision up-to-date in case the device is updated.
       accessory
@@ -217,30 +238,43 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
           state.firmwareVersion,
         );
 
-      accessory
+      if('temp' in features) accessory
         .getService(Service.TemperatureSensor)!
         .updateCharacteristic(Characteristic.CurrentTemperature, state.temp);
 
-      accessory
+      if('humidity' in features) accessory
         .getService(Service.HumiditySensor)!
         .updateCharacteristic(
           Characteristic.CurrentRelativeHumidity,
           state.humidity,
         );
 
-      accessory
+      if('co2' in features) accessory
         .getService(Service.CarbonDioxideSensor)!
         .updateCharacteristic(Characteristic.CarbonDioxideLevel, state.co2);
 
-      // if (state.envLightLevel) {
-      //   // Env Light Level needs to be tested with lux meter
-      //   accessory
-      //    .getService(Service.LightSensor)!
-      //     .updateCharacteristic(
-      //       Characteristic.CurrentAmbientLightLevel,
-      //       state.envLightLevel,
-      //     );
-      // }
+      if('doorOpen' in features) accessory
+        .getService(Service.doorSensor)!
+        .updateCharacteristic(Characteristic.CurrentPosition,
+          state.doorOpen ? DOOR_OPEN : DOOR_CLOSED)
+        .updateCharacteristic(Characteristic.TargetPosition,
+          state.doorOpen ? DOOR_OPEN : DOOR_CLOSED)
+        .setCharacteristic(Characteristic.PositionState,
+          Characteristic.PositionState.STOPPED)
+
+      if ('envLightLevel' in features) {
+        // Env Light Level needs to be tested with lux meter
+        accessory
+         .getService(Service.LightSensor)!
+          .updateCharacteristic(
+            Characteristic.CurrentAmbientLightLevel,
+            // Can someone kindly explain why TS is upset about this, but none
+            // of the other places that updateCharacteristic is called ????
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore 
+            state.envLightLevel,
+          );
+      }
 
       accessory
         .getService(Service.AirQualitySensor)!
@@ -260,7 +294,7 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
         .updateCharacteristic(Characteristic.FilterLifeLevel, state.filterLife)
         .updateCharacteristic(
           Characteristic.FilterChangeIndication,
-          state.filterLife < 10
+          state.filterLife < 5
             ? Characteristic.FilterChangeIndication.CHANGE_FILTER
             : Characteristic.FilterChangeIndication.FILTER_OK,
         )
@@ -411,8 +445,11 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
     this.accessories.push(accessory);
   }
 
-  addAccessory({ name, modelName, pncId, firmwareVersion }) {
+  addAccessory({ name, modelName, pncId, firmwareVersion, features }) {
     const uuid = hap.uuid.generate(pncId);
+    const hasFeature = arrayToObject(features)
+
+    this.log.info(name, ': ', features)
 
     if (this.isAccessoryRegistered(name, uuid)) {
       this.log.info(
@@ -427,11 +464,11 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
 
       accessory.addService(Service.AirPurifier);
       accessory.addService(Service.AirQualitySensor);
-      accessory.addService(Service.TemperatureSensor);
-      accessory.addService(Service.CarbonDioxideSensor);
-      accessory.addService(Service.HumiditySensor);
-
-      // accessory.addService(Service.LightSensor);
+      if('temp' in hasFeature) accessory.addService(Service.TemperatureSensor);
+      if('co2' in hasFeature) accessory.addService(Service.CarbonDioxideSensor);
+      if('humidity' in hasFeature) accessory.addService(Service.HumiditySensor);
+      if('envLightLevel' in hasFeature) accessory.addService(Service.LightSensor);
+      if('doorOpen' in hasFeature) accessory.addService(Service.DoorSensor);
 
       accessory
         .getService(Service.AccessoryInformation)!
