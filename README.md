@@ -1,23 +1,18 @@
-# Homebridge integration for AEG Wellbeing
+# Homebridge Integration for AEG Wellbeing
 
-This is the AEG Wellbeing plugin for [Homebridge](https://github.com/nfarina/homebridge). 
+The AEG Wellbeing plugin for [Homebridge](https://github.com/nfarina/homebridge) adds support for AEG Wellbeing Air Purifiers and all their sensors (Air Quality, Temperature, Humidity, CO2, Filter Life) to your Home app. This plugin has been tested on the following models:
 
-## Supported devices
-This plugin will add support for AEG Wellbeing Air Purifiers and all their sensors (Air Quality, Temperature, Humidity, CO2, Filter Life) to your Home app. It has been tested on the following models:
+- AEG Wellbeing AX9
+- AEG Wellbeing AX5
 
- - AEG Wellbeing AX9
- - AEG Wellbeing AX5
-
-_If you have another model in the range and it works for you, then please add it to this list._
+If you have another model in the range and it works for you, please add it to this list.
 
 ## Configuration
-Use Homebridge UI to configure and set your username and password. This is the same as used in the AEG Wellbeing App.
+To configure the plugin, use the Homebridge UI to set your username and password, which are the same credentials you use in the AEG Wellbeing App.
 
 ### Ionizer
-Currently, there is no support for ionizer in HomeKit, so we mapped this to Swing Mode instead. 
-Use oscilliator/swing mode to control ionizer on/off.
+Please note that ionizer is currently not supported in HomeKit, so we have mapped it to Swing Mode. Use oscilliator/swing mode to control the ionizer on/off.
 
 ---
 
-*This is plugin is forked from [homebridge-electrolux-wellbeing](https://github.com/baboons/homebridge-electrolux-wellbeing). It fixes a few bugs and now only adds sensors supported by the connected device, which veries by model. If you have an Electrolux Wellbeing Air Purifier then this plugin should work with your device as both brands use a common API.*
-
+This plugin is a fork of [homebridge-electrolux-wellbeing](https://github.com/baboons/homebridge-electrolux-wellbeing). It fixes a few bugs and only adds sensors supported by the connected device, which varies by model. If you have an Electrolux Wellbeing Air Purifier, then this plugin should work with your device as both brands use a common API.
