@@ -15,13 +15,8 @@ import {
 import find from 'lodash/find';
 
 import createClient from './api';
-import { Appliance, WellbeingApi,WorkModes } from './types';
-
-const MANUFACTURER = 'AEG'
-const PLUGIN_NAME = 'aeg-wellbeing';
-const PLATFORM_NAME = 'AEGWellbeing';
-// const DOOR_OPEN = 100;
-// const DOOR_CLOSED = 0;
+import { MANUFACTURER, PLATFORM_NAME,PLUGIN_NAME } from './brand'
+import { Appliance, WellbeingApi, WorkModes } from './types';
 
 // AX9 fans support speeds from [1, 9].
 const FAN_SPEED_MULTIPLIER = 100 / 9;   
@@ -40,7 +35,7 @@ const arrayToObject = arr => {
   return obj;
 };
 
-class AEGWellbeingPlatform implements DynamicPlatformPlugin {
+class wellbeingPlatform implements DynamicPlatformPlugin {
   private client?: AxiosInstance;
 
   private readonly log: Logging;
@@ -114,7 +109,7 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
 
   getPollTime(pollTime): number {
     if (!pollTime || pollTime < 5) {
-      this.log.info('Set poll time is below 5s, forcing 5s');
+      this.log.warn('Set poll time is below 5s, forcing 5s');
       return 5 * 1000;
     }
 
@@ -191,7 +186,7 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
         await this.client!.get('/Domains/Appliances');
       return response.data;
     } catch (error) {
-      this.log.info(`Could not fetch appliances: ${  error}`);
+      this.log.error(`Could not fetch appliances: ${error}`);
       return [];
     }
   }
@@ -211,11 +206,12 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
       });
       this.log.debug('command responded', response.data);
     } catch (error) {
-      this.log.info('Could run command', error);
+      this.log.error('Could run command', error);
     }
   }
 
   updateValues(data) {
+    // eslint-disable-next-line sonarjs/cognitive-complexity
     this.accessories.forEach((accessory) => {
       const { pncId } = accessory.context;
       const state = this.getApplianceState(pncId, data);
@@ -254,8 +250,8 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
         .getService(Service.CarbonDioxideSensor)!
         .updateCharacteristic(Characteristic.CarbonDioxideLevel, state.co2);
 
-      if('doorOpen' in features && !accessory.getService(Service.ContactSensor)) 
-        accessory.addService(Service.ContactSensor, 'Filter Contact')
+      // if('doorOpen' in features && !accessory.getService(Service.ContactSensor)) 
+      //   accessory.addService(Service.ContactSensor, 'Filter Door')
 
       // if('doorOpen' in features) accessory
       //   .getService(Service.DoorSensor)!
@@ -276,13 +272,15 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
           );
       }
 
-      const airQualitySensor = accessory
-        .getService(Service.AirQualitySensor)!
-        .updateCharacteristic(
+      const airQualitySensor = accessory.getService(Service.AirQualitySensor)!
+
+      if('pm25' in features) airQualitySensor.updateCharacteristic(
           Characteristic.AirQuality,
           this.getAirQualityLevel(state.pm25),
         )
         .updateCharacteristic(Characteristic.PM2_5Density, state.pm25)
+      
+      if('pm10' in features) airQualitySensor
         .updateCharacteristic(Characteristic.PM10Density, state.pm10);
 
       if('tvoc' in features) airQualitySensor.updateCharacteristic(
@@ -291,6 +289,8 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
         );
 
       const airPurifierSevice = accessory.getService(Service.AirPurifier)!
+
+      if('workMode' in features) airPurifierSevice
         .updateCharacteristic(
           Characteristic.Active,
           state.workMode !== WorkModes.Off,
@@ -303,26 +303,30 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
           Characteristic.TargetAirPurifierState,
           this.getAirPurifierStateTarget(state.workMode),
         )
+
+      if('fanSpeed' in features) airPurifierSevice
         .updateCharacteristic(
           Characteristic.RotationSpeed,
           state.fanSpeed * FAN_SPEED_MULTIPLIER,
         )
+
+      if('safetyLock' in features) airPurifierSevice
         .updateCharacteristic(
           Characteristic.LockPhysicalControls,
           state.safetyLock,
         )
 
-        if('filterLife' in features) airPurifierSevice
-          .updateCharacteristic(Characteristic.FilterLifeLevel, state.filterLife)
-          .updateCharacteristic(
-            Characteristic.FilterChangeIndication,
-            state.filterLife < 5
-              ? Characteristic.FilterChangeIndication.CHANGE_FILTER
-              : Characteristic.FilterChangeIndication.FILTER_OK,
-          )
+      if('filterLife' in features) airPurifierSevice
+        .updateCharacteristic(Characteristic.FilterLifeLevel, state.filterLife)
+        .updateCharacteristic(
+          Characteristic.FilterChangeIndication,
+          state.filterLife < 5
+            ? Characteristic.FilterChangeIndication.CHANGE_FILTER
+            : Characteristic.FilterChangeIndication.FILTER_OK,
+        )
 
-        if('ionizer' in features) airPurifierSevice
-          .updateCharacteristic(Characteristic.SwingMode, state.ionizer);
+      if('ionizer' in features) airPurifierSevice
+        .updateCharacteristic(Characteristic.SwingMode, state.ionizer);
     });
   }
 
@@ -453,7 +457,7 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
     const uuid = hap.uuid.generate(pncId);
     const hasFeature = arrayToObject(features)
 
-    this.log.info(name, 'features: ', features)
+    this.log.debug(name, 'features: ', features)
 
     if (this.isAccessoryRegistered(name, uuid)) {
       this.log.info(
@@ -466,17 +470,15 @@ class AEGWellbeingPlatform implements DynamicPlatformPlugin {
     const accessory = new Accessory(name, uuid);
 
     accessory.context.pncId = pncId;
-    this.log.info('Context:', accessory.context)
+    this.log.debug('Context:', accessory.context)
 
     accessory.addService(Service.AirPurifier);
-    accessory.addService(Service.AirQualitySensor);
+    if('pm25' in hasFeature) accessory.addService(Service.AirQualitySensor);
     if('temp' in hasFeature) accessory.addService(Service.TemperatureSensor);
     if('co2' in hasFeature) accessory.addService(Service.CarbonDioxideSensor);
     if('humidity' in hasFeature) accessory.addService(Service.HumiditySensor);
     if('envLightLevel' in hasFeature) accessory.addService(Service.LightSensor);
     if('doorOpen' in hasFeature) accessory.addService(Service.ContactSensor, 'Filter Door')
-
-    this.log.info('Services:', Object.keys(accessory.services))
 
     accessory
       .getService(Service.AccessoryInformation)!
@@ -580,5 +582,5 @@ export = (api: API) => {
   Accessory = api.platformAccessory;
   Service = hap.Service;
   Characteristic = hap.Characteristic;
-  api.registerPlatform(PLATFORM_NAME, AEGWellbeingPlatform);
+  api.registerPlatform(PLATFORM_NAME, wellbeingPlatform);
 };
