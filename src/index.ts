@@ -15,7 +15,7 @@ import {
 import find from 'lodash/find';
 
 import createClient from './api';
-import { MANUFACTURER, PLATFORM_NAME,PLUGIN_NAME } from './brand'
+import { MANUFACTURER, MODEL_PREFIX, PLATFORM_NAME,PLUGIN_NAME } from './brand'
 import { Appliance, WellbeingApi, WorkModes } from './types';
 
 // AX9 fans support speeds from [1, 9].
@@ -34,6 +34,8 @@ const arrayToObject = arr => {
   arr.forEach(element => obj[element] = true); // eslint-disable-line no-return-assign
   return obj;
 };
+
+const fixModelPrefix = (model) => `${MODEL_PREFIX}${model.match(/(\d+)/)[0]}`
 
 class wellbeingPlatform implements DynamicPlatformPlugin {
   private client?: AxiosInstance;
@@ -457,6 +459,7 @@ class wellbeingPlatform implements DynamicPlatformPlugin {
     const uuid = hap.uuid.generate(pncId);
     const hasFeature = arrayToObject(features)
 
+    this.log.debug(modelName, '->', fixModelPrefix(modelName))
     this.log.debug(name, 'features: ', features)
 
     if (this.isAccessoryRegistered(name, uuid)) {
@@ -483,7 +486,7 @@ class wellbeingPlatform implements DynamicPlatformPlugin {
     accessory
       .getService(Service.AccessoryInformation)!
       .setCharacteristic(Characteristic.Manufacturer, MANUFACTURER)
-      .setCharacteristic(Characteristic.Model, modelName)
+      .setCharacteristic(Characteristic.Model, fixModelPrefix(modelName))
       .setCharacteristic(Characteristic.SerialNumber, pncId)
       .setCharacteristic(Characteristic.FirmwareRevision, firmwareVersion);
 
