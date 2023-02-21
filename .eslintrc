@@ -5,6 +5,7 @@
     "class-methods-use-this": 0,
     "import/no-extraneous-dependencies": 0,
     "scanjs-rules/call_connect": 0,
+    "unicorn/no-array-reduce": 0,
     "unicorn/switch-case-braces": ["error", "avoid"],
 
     "@typescript-eslint/restrict-template-expressions": 0,

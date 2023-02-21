@@ -40,6 +40,7 @@ interface Appliance {
   scheduler?: boolean;
   filterType: number;
   version: number;
+  doorOpen: boolean;
   pm1: number;
   pm25: number;
   pm10: number;
