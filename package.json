@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge AEG Wellbeing",
   "name": "homebridge-aeg-wellbeing",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "description": "Connects to your AEG Air Purifier",
   "license": "Apache-2.0",
   "repository": {
@@ -12,8 +12,8 @@
     "url": "https://github.com/davidjbradshaw/homebridge-aeg-wellbeing.git/issues"
   },
   "engines": {
-    "node": ">=10.17.0",
-    "homebridge": ">=1.0.0"
+    "node": ">=14.18.1",
+    "homebridge": ">=1.3.5"
   },
   "main": "dist/index.js",
   "scripts": {
