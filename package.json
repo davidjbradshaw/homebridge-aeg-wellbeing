@@ -5,8 +5,8 @@
   "description": "Connects to your AEG Air Purifier",
   "license": "Apache-2.0",
   "funding": [{
-    "type" : "paypal",
-    "url" : "https://paypal.me/davidjbradshaw"
+    "type" : "buymeacoffee",
+    "url" : "https://www.buymeacoffee.com/davidjbradshaw"
   },{
     "type" : "github",
     "url" : "https://github.com/sponsors/davidjbradshaw"
