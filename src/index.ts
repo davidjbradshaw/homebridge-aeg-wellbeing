@@ -10,7 +10,7 @@ import {
   Logging,
   PlatformAccessory,
   PlatformAccessoryEvent,
-  PlatformConfig
+  PlatformConfig,
 } from 'homebridge'
 import find from 'lodash/find'
 
@@ -70,9 +70,7 @@ class wellbeingPlatform implements DynamicPlatformPlugin {
       }
 
       const appliances = await this.getAllAppliances()
-      const applianceData = await Promise.all(
-        appliances.map((appliance) => this.fetchApplianceData(appliance.pncId))
-      )
+      const applianceData = await Promise.all(appliances.map((appliance) => this.fetchApplianceData(appliance.pncId)))
 
       this.log.debug('Fetched appliances: ', appliances)
       this.log.debug('Fetched data: ', applianceData)
@@ -83,15 +81,12 @@ class wellbeingPlatform implements DynamicPlatformPlugin {
           name: applianceName,
           modelName,
           firmwareVersion: applianceData[i]?.firmwareVersion,
-          features: getSupportedFeatues(applianceData[i])
+          features: getSupportedFeatues(applianceData[i]),
         })
       })
 
       this.updateValues(applianceData)
-      setInterval(
-        () => this.checkAppliances(),
-        this.getPollTime(this.config.pollTime)
-      )
+      setInterval(() => this.checkAppliances(), this.getPollTime(this.config.pollTime))
     })
   }
 
@@ -100,7 +95,7 @@ class wellbeingPlatform implements DynamicPlatformPlugin {
       return await createClient({
         username: this.config.username,
         password: this.config.password,
-        log: this.log
+        log: this.log,
       })
     } catch (error) {
       this.log.debug('Error while creating client', error)
@@ -130,17 +125,12 @@ class wellbeingPlatform implements DynamicPlatformPlugin {
   }
 
   async fetchAppliancesData() {
-    return Promise.all(
-      this.accessories.map((accessory) =>
-        this.fetchApplianceData(accessory.context.pncId)
-      )
-    )
+    return Promise.all(this.accessories.map((accessory) => this.fetchApplianceData(accessory.context.pncId)))
   }
 
   async fetchApplianceData(pncId: string): Promise<Appliance | undefined> {
     try {
-      const response: { data: WellbeingApi.ApplianceData } =
-        await this.client!.get(`/Appliances/${pncId}`)
+      const response: { data: WellbeingApi.ApplianceData } = await this.client!.get(`/Appliances/${pncId}`)
       const { reported } = response.data.twin.properties
 
       this.log.debug('API response.data:', response.data)
@@ -171,7 +161,7 @@ class wellbeingPlatform implements DynamicPlatformPlugin {
         temp: reported.Temp,
         humidity: reported.Humidity,
         envLightLevel: reported.EnvLightLvl,
-        rssi: reported.RSSI
+        rssi: reported.RSSI,
       }
     } catch (error) {
       this.log.warn(`Could not fetch appliances data: ${error}`)
@@ -187,8 +177,7 @@ class wellbeingPlatform implements DynamicPlatformPlugin {
 
   async getAllAppliances() {
     try {
-      const response: { data: WellbeingApi.Appliance[] } =
-        await this.client!.get('/Domains/Appliances')
+      const response: { data: WellbeingApi.Appliance[] } = await this.client!.get('/Domains/Appliances')
       return response.data
     } catch (error) {
       this.log.error(`Could not fetch appliances: ${error}`)
@@ -196,18 +185,14 @@ class wellbeingPlatform implements DynamicPlatformPlugin {
     }
   }
 
-  async sendCommand(
-    pncId: string,
-    command: string,
-    value: CharacteristicValue
-  ) {
+  async sendCommand(pncId: string, command: string, value: CharacteristicValue) {
     this.log.debug('sending command', {
-      [command]: value
+      [command]: value,
     })
 
     try {
       const response = await this.client!.put(`/Appliances/${pncId}/Commands`, {
-        [command]: value
+        [command]: value,
       })
       this.log.debug('command responded', response.data)
     } catch (error) {
@@ -235,10 +220,7 @@ class wellbeingPlatform implements DynamicPlatformPlugin {
       // Keep firmware revision up-to-date in case the device is updated.
       accessory
         .getService(Service.AccessoryInformation)!
-        .setCharacteristic(
-          Characteristic.FirmwareRevision,
-          state.firmwareVersion
-        )
+        .setCharacteristic(Characteristic.FirmwareRevision, state.firmwareVersion)
 
       if ('temp' in features)
         accessory
@@ -248,10 +230,7 @@ class wellbeingPlatform implements DynamicPlatformPlugin {
       if ('humidity' in features)
         accessory
           .getService(Service.HumiditySensor)!
-          .updateCharacteristic(
-            Characteristic.CurrentRelativeHumidity,
-            state.humidity
-          )
+          .updateCharacteristic(Characteristic.CurrentRelativeHumidity, state.humidity)
 
       if ('co2' in features)
         accessory
@@ -282,59 +261,31 @@ class wellbeingPlatform implements DynamicPlatformPlugin {
 
       if ('pm25' in features)
         airQualitySensor
-          .updateCharacteristic(
-            Characteristic.AirQuality,
-            this.getAirQualityLevel(state.pm25)
-          )
+          .updateCharacteristic(Characteristic.AirQuality, this.getAirQualityLevel(state.pm25))
           .updateCharacteristic(Characteristic.PM2_5Density, state.pm25)
 
-      if ('pm10' in features)
-        airQualitySensor.updateCharacteristic(
-          Characteristic.PM10Density,
-          state.pm10
-        )
+      if ('pm10' in features) airQualitySensor.updateCharacteristic(Characteristic.PM10Density, state.pm10)
 
       if ('tvoc' in features)
-        airQualitySensor.updateCharacteristic(
-          Characteristic.VOCDensity,
-          this.convertTVOCToDensity(state.tvoc)
-        )
+        airQualitySensor.updateCharacteristic(Characteristic.VOCDensity, this.convertTVOCToDensity(state.tvoc))
 
       const airPurifierSevice = accessory.getService(Service.AirPurifier)!
 
       if ('workMode' in features)
         airPurifierSevice
-          .updateCharacteristic(
-            Characteristic.Active,
-            state.workMode !== WorkModes.Off
-          )
-          .updateCharacteristic(
-            Characteristic.CurrentAirPurifierState,
-            this.getAirPurifierState(state.workMode)
-          )
-          .updateCharacteristic(
-            Characteristic.TargetAirPurifierState,
-            this.getAirPurifierStateTarget(state.workMode)
-          )
+          .updateCharacteristic(Characteristic.Active, state.workMode !== WorkModes.Off)
+          .updateCharacteristic(Characteristic.CurrentAirPurifierState, this.getAirPurifierState(state.workMode))
+          .updateCharacteristic(Characteristic.TargetAirPurifierState, this.getAirPurifierStateTarget(state.workMode))
 
       if ('fanSpeed' in features)
-        airPurifierSevice.updateCharacteristic(
-          Characteristic.RotationSpeed,
-          state.fanSpeed * FAN_SPEED_MULTIPLIER
-        )
+        airPurifierSevice.updateCharacteristic(Characteristic.RotationSpeed, state.fanSpeed * FAN_SPEED_MULTIPLIER)
 
       if ('safetyLock' in features)
-        airPurifierSevice.updateCharacteristic(
-          Characteristic.LockPhysicalControls,
-          state.safetyLock
-        )
+        airPurifierSevice.updateCharacteristic(Characteristic.LockPhysicalControls, state.safetyLock)
 
       if ('filterLife' in features)
         airPurifierSevice
-          .updateCharacteristic(
-            Characteristic.FilterLifeLevel,
-            state.filterLife
-          )
+          .updateCharacteristic(Characteristic.FilterLifeLevel, state.filterLife)
           .updateCharacteristic(
             Characteristic.FilterChangeIndication,
             state.filterLife < 5
@@ -342,11 +293,7 @@ class wellbeingPlatform implements DynamicPlatformPlugin {
               : Characteristic.FilterChangeIndication.FILTER_OK
           )
 
-      if ('ionizer' in features)
-        airPurifierSevice.updateCharacteristic(
-          Characteristic.SwingMode,
-          state.ionizer
-        )
+      if ('ionizer' in features) airPurifierSevice.updateCharacteristic(Characteristic.SwingMode, state.ionizer)
     })
   }
 
@@ -366,109 +313,64 @@ class wellbeingPlatform implements DynamicPlatformPlugin {
     accessory
       .getService(Service.AirPurifier)!
       .getCharacteristic(Characteristic.Active)
-      .on(
-        CharacteristicEventTypes.SET,
-        (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-          const workMode = value === 1 ? WorkModes.Auto : WorkModes.Off
+      .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+        const workMode = value === 1 ? WorkModes.Auto : WorkModes.Off
 
-          if (
-            accessory
-              .getService(Service.AirPurifier)!
-              .getCharacteristic(Characteristic.Active).value !== value
-          ) {
-            this.sendCommand(pncId, 'WorkMode', workMode)
-            this.log.info(
-              `%s AirPurifier Active was set to: ${workMode}`,
-              accessory.displayName
-            )
-          }
-
-          callback()
+        if (accessory.getService(Service.AirPurifier)!.getCharacteristic(Characteristic.Active).value !== value) {
+          this.sendCommand(pncId, 'WorkMode', workMode)
+          this.log.info(`%s AirPurifier Active was set to: ${workMode}`, accessory.displayName)
         }
-      )
+
+        callback()
+      })
 
     accessory
       .getService(Service.AirPurifier)!
       .getCharacteristic(Characteristic.TargetAirPurifierState)
-      .on(
-        CharacteristicEventTypes.SET,
-        (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-          const workMode =
-            value === Characteristic.TargetAirPurifierState.MANUAL
-              ? WorkModes.Manual
-              : WorkModes.Auto
-          this.sendCommand(pncId, 'WorkMode', workMode)
-          this.log.info(
-            `%s AirPurifier Work Mode was set to: ${workMode}`,
-            accessory.displayName
-          )
-          callback()
-        }
-      )
+      .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+        const workMode = value === Characteristic.TargetAirPurifierState.MANUAL ? WorkModes.Manual : WorkModes.Auto
+        this.sendCommand(pncId, 'WorkMode', workMode)
+        this.log.info(`%s AirPurifier Work Mode was set to: ${workMode}`, accessory.displayName)
+        callback()
+      })
 
     accessory
       .getService(Service.AirPurifier)!
       .getCharacteristic(Characteristic.RotationSpeed)
-      .on(
-        CharacteristicEventTypes.SET,
-        (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-          const fanSpeed = Math.floor(
-            parseInt(value.toString(), 10) / FAN_SPEED_MULTIPLIER
-          )
-          this.sendCommand(pncId, 'FanSpeed', fanSpeed)
+      .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+        const fanSpeed = Math.floor(parseInt(value.toString(), 10) / FAN_SPEED_MULTIPLIER)
+        this.sendCommand(pncId, 'FanSpeed', fanSpeed)
 
-          this.log.info(
-            `%s AirPurifier Fan Speed set to: ${fanSpeed}`,
-            accessory.displayName
-          )
-          callback()
-        }
-      )
+        this.log.info(`%s AirPurifier Fan Speed set to: ${fanSpeed}`, accessory.displayName)
+        callback()
+      })
 
     accessory
       .getService(Service.AirPurifier)!
       .getCharacteristic(Characteristic.LockPhysicalControls)
-      .on(
-        CharacteristicEventTypes.SET,
-        (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-          if (
-            accessory
-              .getService(Service.AirPurifier)!
-              .getCharacteristic(Characteristic.LockPhysicalControls).value !==
-            value
-          ) {
-            this.sendCommand(pncId, 'SafetyLock', value)
+      .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+        if (
+          accessory.getService(Service.AirPurifier)!.getCharacteristic(Characteristic.LockPhysicalControls).value !==
+          value
+        ) {
+          this.sendCommand(pncId, 'SafetyLock', value)
 
-            this.log.info(
-              `%s AirPurifier Saftey Lock set to: ${value}`,
-              accessory.displayName
-            )
-          }
-          callback()
+          this.log.info(`%s AirPurifier Saftey Lock set to: ${value}`, accessory.displayName)
         }
-      )
+        callback()
+      })
 
     accessory
       .getService(Service.AirPurifier)!
       .getCharacteristic(Characteristic.SwingMode)
-      .on(
-        CharacteristicEventTypes.SET,
-        (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-          if (
-            accessory
-              .getService(Service.AirPurifier)!
-              .getCharacteristic(Characteristic.SwingMode).value !== value
-          ) {
-            this.sendCommand(pncId, 'Ionizer', value)
+      .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+        if (accessory.getService(Service.AirPurifier)!.getCharacteristic(Characteristic.SwingMode).value !== value) {
+          this.sendCommand(pncId, 'Ionizer', value)
 
-            this.log.info(
-              `%s AirPurifier Ionizer set to: ${value}`,
-              accessory.displayName
-            )
-          }
-          callback()
+          this.log.info(`%s AirPurifier Ionizer set to: ${value}`, accessory.displayName)
         }
-      )
+        callback()
+      })
 
     this.accessories.push(accessory)
   }
@@ -481,10 +383,7 @@ class wellbeingPlatform implements DynamicPlatformPlugin {
     this.log.debug(name, 'features: ', features)
 
     if (this.isAccessoryRegistered(name, uuid)) {
-      this.log.info(
-        'Accessory name %s already added, loading from cache ',
-        name
-      )
+      this.log.info('Accessory name %s already added, loading from cache ', name)
       return
     }
     this.log.info('Adding new accessory with name %s', name, uuid)
@@ -499,8 +398,7 @@ class wellbeingPlatform implements DynamicPlatformPlugin {
     if ('co2' in hasFeature) accessory.addService(Service.CarbonDioxideSensor)
     if ('humidity' in hasFeature) accessory.addService(Service.HumiditySensor)
     if ('envLightLevel' in hasFeature) accessory.addService(Service.LightSensor)
-    if ('doorOpen' in hasFeature)
-      accessory.addService(Service.ContactSensor, 'Filter Door')
+    if ('doorOpen' in hasFeature) accessory.addService(Service.ContactSensor, 'Filter Door')
 
     accessory
       .getService(Service.AccessoryInformation)!
@@ -511,19 +409,13 @@ class wellbeingPlatform implements DynamicPlatformPlugin {
 
     this.configureAccessory(accessory)
 
-    this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
-      accessory
-    ])
+    this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory])
   }
 
   removeAccessories() {
     this.log.info('Removing all accessories')
 
-    this.api.unregisterPlatformAccessories(
-      PLUGIN_NAME,
-      PLATFORM_NAME,
-      this.accessories
-    )
+    this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, this.accessories)
     this.accessories.splice(0, this.accessories.length)
   }
 

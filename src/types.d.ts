@@ -16,12 +16,12 @@ declare module 'homebridge' {
 export const enum WorkModes {
   Off = 'PowerOff',
   Manual = 'Manual',
-  Auto = 'Auto'
+  Auto = 'Auto',
 }
 
 export const enum ConnectionState {
   Connected = 'Connected',
-  Disconnected = 'Disconnected'
+  Disconnected = 'Disconnected',
 }
 
 interface Appliance {

@@ -2,16 +2,15 @@ import axios from 'axios'
 import createAuthRefreshInterceptor from 'axios-auth-refresh'
 
 const BASE_URL = 'https://api.delta.electrolux.com/api'
-const CLIENT_URL =
-  'https://electrolux-wellbeing-client.vercel.app/api/mu52m5PR9X'
+const CLIENT_URL = 'https://electrolux-wellbeing-client.vercel.app/api/mu52m5PR9X'
 
 const contentType = {
-  'Content-Type': 'application/json'
+  'Content-Type': 'application/json',
 }
 
 const fetchClientToken = async () => {
   const response = await axios.get(CLIENT_URL, {
-    headers: contentType
+    headers: contentType,
   })
 
   return response.data.accessToken
@@ -22,13 +21,13 @@ const doLogin = async ({ username, password, clientToken }) =>
     `${BASE_URL}/Users/Login`,
     {
       Username: username,
-      password
+      password,
     },
     {
       headers: {
         ...contentType,
-        Authorization: `Bearer ${clientToken}`
-      }
+        Authorization: `Bearer ${clientToken}`,
+      },
     }
   )
 
@@ -37,7 +36,7 @@ export default async ({ username, password, log }) => {
   const response = await doLogin({
     username,
     password,
-    clientToken
+    clientToken,
   })
   const { accessToken } = response.data
 
@@ -45,8 +44,8 @@ export default async ({ username, password, log }) => {
     baseURL: BASE_URL,
     headers: {
       ...contentType,
-      Authorization: `Bearer ${accessToken}`
-    }
+      Authorization: `Bearer ${accessToken}`,
+    },
   })
 
   createAuthRefreshInterceptor(
@@ -55,7 +54,7 @@ export default async ({ username, password, log }) => {
       doLogin({
         username,
         password,
-        clientToken
+        clientToken,
       })
         // eslint-disable-next-line promise/always-return
         .then((tokenRefreshResponse) => {
@@ -68,7 +67,7 @@ export default async ({ username, password, log }) => {
           log.error('Axios:', error)
         }),
     {
-      statusCodes: [400, 401, 403, 408, 429, 500, 502, 503, 504]
+      statusCodes: [400, 401, 403, 408, 429, 500, 502, 503, 504],
     }
   )
 
