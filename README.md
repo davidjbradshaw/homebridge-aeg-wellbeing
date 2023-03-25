@@ -3,7 +3,7 @@
 
 The AEG Wellbeing plugin for [Homebridge](https://github.com/nfarina/homebridge) adds support for AEG / Electrolux Wellbeing Air Purifiers and all their sensors (Air Quality, Temperature, Humidity, CO2, Filter Life) to your Home app. This plugin has been tested on the following models:
 
-- AEG Wellbeing AX9 / ELectrolux Pure A9
+- AEG Wellbeing AX9 / Electrolux Pure A9
 - AEG Wellbeing AX5 / Electrolux Well A5
 
 If you have another model in the range and it works for you, please add it to this list.
