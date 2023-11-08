@@ -1,5 +1,9 @@
 
-# Homebridge AEG Wellbeing
+# Homebridge AEG Wellbeing (deprecated)
+
+*Due to AEG discontining the API this plugin uses, it nolonger works. Going forward it is recommended that you use []() which supports the new API.
+
+--
 
 The AEG Wellbeing plugin for [Homebridge](https://github.com/nfarina/homebridge) adds support for AEG / Electrolux Wellbeing Air Purifiers and all their sensors (Air Quality, Temperature, Humidity, CO2, Filter Life) to your Home app. This plugin has been tested on the following models:
 
