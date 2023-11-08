@@ -56,7 +56,6 @@ class wellbeingPlatform implements DynamicPlatformPlugin {
     this.config = config
 
     api.on(APIEvent.DID_FINISH_LAUNCHING, async () => {
-
       this.log.warn('AEG have discontinued the Wellbeing API, this plugin will no longer work.')
       this.log.warn('Support for the replacement API is provided by homebridge-electrolux-devices.')
 
