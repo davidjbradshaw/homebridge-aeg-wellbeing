@@ -1,7 +1,7 @@
 {
   "displayName": "AEG Wellbeing (deprecated)",
   "name": "homebridge-aeg-wellbeing",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "description": "Use Homebridge Electrolux Devices Instead",
   "license": "Apache-2.0",
   "funding": [
