@@ -1,7 +1,7 @@
 
 # Homebridge AEG Wellbeing (deprecated)
 
-*Due to AEG discontining the API this plugin uses, it nolonger works. Going forward it is recommended that you use []() which supports the new API.
+*Due to AEG discontining the API this plugin uses, it nolonger works. Going forward it is recommended that you use []() which supports the new API.*
 
 --
 
